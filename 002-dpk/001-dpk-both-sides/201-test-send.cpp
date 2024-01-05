@@ -254,15 +254,15 @@ int main() {
      * */
 
     // 256-bit key 
-    uint8_t key[32] = {0x00};
+    // uint8_t key[32] = {0x00};
 
-    for (size_t i = 0; i < 32; ++i) {
-        sscanf(dpk.substr(2 * i, 2).c_str(), "%02x",
-            (unsigned int *)&key[i]);
-    }
+    // for (size_t i = 0; i < 32; ++i) {
+    //     sscanf(dpk.substr(2 * i, 2).c_str(), "%02x",
+    //         (unsigned int *)&key[i]);
+    // }
 
     // This is the dummy key for testing purpose
-    // uint8_t key[32] = {0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x97, 0x18, 0x09, 0xcf, 0x4f, 0x3c, 0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x97, 0x18, 0x09, 0xcf, 0x4f, 0x3c};
+    uint8_t key[32] = {0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x97, 0x18, 0x09, 0xcf, 0x4f, 0x3c, 0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x97, 0x18, 0x09, 0xcf, 0x4f, 0x3c};
 
     uint8_t iv[16] = {0x00};
 
@@ -276,8 +276,6 @@ int main() {
             // Create a text combined with command + salt(first 16 characters)
             std::string command = "zy";
             std::string originalText = command + sa1;
-            // Use AES-ECB-256 to ecrypt the text
-            std::string encryptedText = encrypt(originalText, key, iv);
             // Use AES-ECB-256 to ecrypt the text
             std::string encryptedText = encrypt(originalText, key, iv);
             // std::string encryptedText2 = encrypt(encryptedText, key, iv);

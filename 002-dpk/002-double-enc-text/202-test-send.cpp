@@ -111,8 +111,6 @@ std::string decrypt(const std::string &input, const uint8_t *key, const uint8_t 
     return std::string(inputBytes.begin(), inputBytes.end());
 }
 
-
-
 /**
  * XOR two Halves in a SHA256 hashed string
  * Step 1. Two halves should have same length
@@ -276,8 +274,6 @@ int main() {
             // Create a text combined with command + salt(first 16 characters)
             std::string command = "zy";
             std::string originalText = command + sa1;
-            // Use AES-ECB-256 to ecrypt the text
-            std::string encryptedText = encrypt(originalText, key, iv);
             // Use AES-ECB-256 to ecrypt the text
             std::string encryptedText = encrypt(originalText, key, iv);
             // std::string encryptedText2 = encrypt(encryptedText, key, iv);

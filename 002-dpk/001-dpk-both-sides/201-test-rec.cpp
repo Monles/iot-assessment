@@ -39,6 +39,30 @@ std::string cyclicRotate(const std::string &originalString, int shift) {
   return rotatedString;
 }
 
+/**
+ * XOR two Halves in a SHA256 hashed string
+ * Step 1. Two halves should have same length
+ * Step 2. After checking the length, XOR each halves
+ *  */
+
+// Function to perform XOR on two hexadecimal strings
+std::string xorHexStrings(const std::string &str1, const std::string &str2) {
+    if (str1.length() != str2.length()) {
+        std::cerr << "Error: Input strings must be of equal length." << std::endl;
+        return "";
+    }
+
+    std::stringstream result;
+
+    for (size_t i = 0; i < str1.length(); ++i) {
+        // Perform bitwise XOR on each character and convert to hexadecimal
+        int hexValue = std::stoi(str1.substr(i, 1), nullptr, 16) ^ std::stoi(str2.substr(i, 1), nullptr, 16);
+        result << std::hex << hexValue;
+    }
+
+    return result.str();
+}
+
 // Function to decrypt a string using TinyAES
 std::string decrypt(const std::string &input, const uint8_t *key, const uint8_t *iv) {
     std::vector<uint8_t> inputBytes(input.begin(), input.end());
@@ -132,6 +156,7 @@ void onDataReceived(MicroBitEvent) {
      */
     std::string dpk = k1;
     dpk.append(k2);
+    uBit.serial.printf("\r\n Received DPK: %s \r\n", dpk.c_str());
 
 
     /**
@@ -139,9 +164,9 @@ void onDataReceived(MicroBitEvent) {
      */
     // Use decrypted string to determine the button press
     if (decryptedText.substr(0,2) == "zy") {
-      uBit.display.print("A");
-      uBit.serial.printf("\r\n ax : %s \r\n", cmd.c_str());
-      uBit.serial.printf("\r\n salt : %s \r\n", salt.c_str());
+      uBit.display.print("3");
+      uBit.serial.printf("\r\n Command : %s \r\n", cmd.c_str());
+      uBit.serial.printf("\r\n Run a fan! \r\n ");
       
       // Run the command
       // Variable holding the speed
@@ -168,8 +193,8 @@ void onDataReceived(MicroBitEvent) {
     }
     if (decryptedText.substr(0,2) == "ax") {
       uBit.display.print("A");
-      uBit.serial.printf("\r\n ax : %s \r\n", cmd.c_str());
-      uBit.serial.printf("\r\n salt : %s \r\n", salt.c_str());
+      uBit.serial.printf("\r\n Command : %s \r\n", cmd.c_str());
+      uBit.serial.printf("\r\n Run Light Sensor! \r\n");
       
       // Run the command
       // initialize an integer variable that will contain the brightness level.
@@ -200,8 +225,8 @@ void onDataReceived(MicroBitEvent) {
     if (decryptedText.substr(0,2) == "bx") {
         uBit.display.print("B");
 
-        uBit.serial.printf("\r\n bx : %s \r\n", cmd.c_str());
-        uBit.serial.printf("\r\n salt : %s \r\n", salt.c_str());
+        uBit.serial.printf("\r\n Command : %s \r\n", cmd.c_str());
+        uBit.serial.printf("\r\n Run LED! \r\n"); 
 
         // Run the command
         // // Define LED pins
@@ -237,9 +262,14 @@ void onDataReceived(MicroBitEvent) {
 
 
 int main() {
+    // Initialise the micro:bit runtime.
     uBit.init();
-    uBit.display.print("R");  // Indicate that the receiver is ready
+    // Sets the radio to listen to packets sent with the given group id.
+    uBit.radio.setGroup(83);
+    // Indicate that the receiver is ready
+    uBit.display.print("R"); 
     uBit.radio.enable();
+    uBit.serial.printf("\n *******Receiver receives a cipher******* \r\n");
 
     // Register the event handler function for radio datagram events
     uBit.messageBus.listen(MICROBIT_ID_RADIO,MICROBIT_RADIO_EVT_DATAGRAM, onDataReceived);
