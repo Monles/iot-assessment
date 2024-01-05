@@ -4,14 +4,25 @@
 #include <vector>
 #include "MicroBit.h"
 #include <cstring>
+#include <cstdint>
+#include <iomanip>
+#include <sstream>
+
+MicroBit uBit;
 
 #include "aes.c"
 #include "aes.h"
-MicroBit uBit;
 
 
-
-
+// Function to perform XOR operation on two strings in hexadecimal representation
+std::string saltXOR(const std::string& str1, const std::string& str2) {
+    std::stringstream result;
+    for (size_t i = 0; i < str1.length() && i < str2.length(); ++i) {
+        result << std::hex << (std::stoi(str1.substr(i, 1), nullptr, 16) ^
+                   std::stoi(str2.substr(i, 1), nullptr, 16));
+    }
+    return result.str();
+}
 // Function to decrypt a string using TinyAES
 std::string decrypt(const std::string &input, const uint8_t *key, const uint8_t *iv) {
     std::vector<uint8_t> inputBytes(input.begin(), input.end());
@@ -28,7 +39,6 @@ std::string decrypt(const std::string &input, const uint8_t *key, const uint8_t 
 
     return std::string(inputBytes.begin(), inputBytes.end());
 }
-
 
 // Event handler function for radio datagram events
 void onDataReceived(MicroBitEvent) {
@@ -53,29 +63,35 @@ void onDataReceived(MicroBitEvent) {
     std::string decryptedText = decrypt(encryptedText, key, iv);
     uBit.serial.printf("\r\n Decrypted Text: %s \r\n", decryptedText.c_str());
 
-    std::string saltID = decryptedText.substr(0,7);
-    if (strcmp(saltID.c_str(),"salt123") == 0){
-      std::string salt = decryptedText.substr(7);
-      uBit.display.print("X");
-      uBit.serial.printf("\r\n Salt: %s \r\n", salt.c_str());
-    }
+    std::string cmd = decryptedText.substr(0,1);
+    uBit.serial.printf("\r\n cmd Text: %s \r\n", cmd.c_str());
+    std::string firstSalt = decryptedText.substr(1,17);
+    uBit.serial.printf("\r\n First salt half Text: %s \r\n", firstSalt.c_str());
+    std::string xorSalt = decryptedText.substr(17,26);
+    uBit.serial.printf("\r\n XORed salt Text: %s \r\n", xorSalt.c_str());
+    std::string secondSalt = saltXOR(xorSalt, firstSalt);
+    uBit.serial.printf("\r\n Second salt half Text: %s \r\n",secondSalt.c_str());
+    std::string salt = firstSalt + secondSalt;
+    uBit.serial.printf("\r\n salt Text: %s \r\n", salt.c_str());
 
     /**
      * Show Commands
      */
     // Use decrypted string to determine the button press
-    if (decryptedText.find("Button A Pressed") != std::string::npos) {
-        uBit.display.print("A");
-         uBit.serial.printf("\nDecrypted Text: %s \r\n", decryptedText.c_str());
+    if (decryptedText.substr(0,2) == "ax") {
+      uBit.display.print("A");
+      uBit.serial.printf("\r\n ax : %s \r\n", cmd.c_str());
+      uBit.serial.printf("\r\n salt : %s \r\n", salt.c_str());
+      
 
-    } else if (decryptedText.find("Button B Pressed") != std::string::npos) {
-        uBit.display.print("B");
-         uBit.serial.printf("\nDecrypted Text: %s \r\n", decryptedText.c_str());
-
-    } else {
-        uBit.display.print("?");
     }
+    if (decryptedText.substr(0,2) == "bx") {
+        uBit.display.print("B");
 
+        uBit.serial.printf("\r\n bx : %s \r\n", cmd.c_str());
+        uBit.serial.printf("\r\n salt : %s \r\n", salt.c_str());
+
+    } 
 
     // Print the decrypted string
     // std::cout << "Decrypted Text: " << decryptedText << std::endl;

@@ -35,7 +35,7 @@ void onDataReceived(MicroBitEvent) {
 
 
     // Assuming receive expects a uint8_t* buffer and length
-    uint8_t receivedData[256];  // Adjust the size as needed
+    uint8_t receivedData[2048];  // Adjust the size as needed
     int receivedSize = uBit.radio.datagram.recv(receivedData, sizeof(receivedData));
     uBit.serial.printf("\n Received Size: %d \r\n", receivedSize);
 
@@ -53,29 +53,44 @@ void onDataReceived(MicroBitEvent) {
     std::string decryptedText = decrypt(encryptedText, key, iv);
     uBit.serial.printf("\r\n Decrypted Text: %s \r\n", decryptedText.c_str());
 
-    std::string saltID = decryptedText.substr(0,7);
-    if (strcmp(saltID.c_str(),"salt123") == 0){
-      std::string salt = decryptedText.substr(7);
-      uBit.display.print("X");
-      uBit.serial.printf("\r\n Salt: %s \r\n", salt.c_str());
+    std::string cmd = decryptedText.substr(0,2);
+    uBit.serial.printf("\r\n cmd Text: %s \r\n", cmd.c_str());
+    std::string salt = decryptedText.substr(2,34);
+    uBit.serial.printf("\r\n salt Text: %s \r\n", salt.c_str());
+    // if (strcmp(saltID.c_str(),"salt123") == 0){
+    //   std::string salt = decryptedText.substr(7);
+    //   uBit.display.print("X");
+    //   uBit.serial.printf("\r\n Salt: %s \r\n", salt.c_str());
+    // }
+    std::string s1;
+    std::string s2;
+    if (salt.substr(0,2) == "s1"){
+      s1 = salt;
     }
+    if (salt.substr(0,2) == "s2"){
+      s2 = salt;
+    }
+    
 
     /**
      * Show Commands
      */
     // Use decrypted string to determine the button press
-    if (decryptedText.find("Button A Pressed") != std::string::npos) {
-        uBit.display.print("A");
-         uBit.serial.printf("\nDecrypted Text: %s \r\n", decryptedText.c_str());
+    if (decryptedText.substr(0,2) == "ax") {
+      uBit.display.print("A");
+      uBit.serial.printf("\r\n ax : %s \r\n", cmd.c_str());
+      uBit.serial.printf("\r\n s1 : %s \r\n", s1.c_str());
+      uBit.serial.printf("\r\n s2 : %s \r\n", s2.c_str());
+      
 
-    } else if (decryptedText.find("Button B Pressed") != std::string::npos) {
-        uBit.display.print("B");
-         uBit.serial.printf("\nDecrypted Text: %s \r\n", decryptedText.c_str());
-
-    } else {
-        uBit.display.print("?");
     }
+    if (decryptedText.substr(0,2) == "bx") {
+        uBit.display.print("B");
+        uBit.serial.printf("\r\n bx : %s \r\n", cmd.c_str());
+        uBit.serial.printf("\r\n s1 : %s \r\n", s1.c_str());
+        uBit.serial.printf("\r\n s2 : %s \r\n", s2.c_str());
 
+    } 
 
     // Print the decrypted string
     // std::cout << "Decrypted Text: " << decryptedText << std::endl;

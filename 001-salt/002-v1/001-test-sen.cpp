@@ -56,12 +56,13 @@ int main() {
 
     uint8_t iv[16] = {0x00};
 
-    std::string salt = "adb*hvywi28";
+    std::string salt1 = "s1dfgdfgdfgdfgdfgd";
+    std::string salt2 = "s2dfgdfgdfgdfgdfgd";
+    std::string salt = salt1.append(salt2);
+    
     // Add a head at the top of salt, so we can identify it in the receiver's side
     uBit.sleep(1000);
-    std::string head = "salt123";
-    std::string originalTextSalt = head.append(salt);
-    std::string encryptedTextSalt = encrypt(originalTextSalt, key, iv);
+    
 
     while (1) {
 
@@ -69,11 +70,18 @@ int main() {
             
         // Check if button A is pressed
         if (uBit.buttonA.isPressed()) {
-            std::string originalTextA = "Button A Pressed";
-            std::string encryptedText = encrypt(originalTextA, key, iv);
+
+            
+             
+            
+            std::string header = "ax";
+            std::string originalText = header.append(salt1);
+            std::string originalTexts2 = header.append(salt1);
+            std::string encryptedText = encrypt(originalText, key, iv);
+            std::string encryptedTexts2 = encrypt(originalTexts2, key, iv);
 
             // Print the original and encrypted strings
-            uBit.serial.printf("\r\n Original Text: %s\r\n", originalTextA.c_str());
+            uBit.serial.printf("\r\n Original Text: %s\r\n", originalText.c_str());
             uBit.serial.printf("\r\n\r Encrypted Text: %s\r\n", encryptedText.c_str());
 
             // // // Decrypt the received message
@@ -81,13 +89,7 @@ int main() {
             // uBit.serial.printf("\r\n*Decrypted Text: %s\r\n", decryptedText.c_str());
             // Send the encrypted message
             uBit.radio.datagram.send(const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(encryptedText.data())), encryptedText.size());
-
-             // Print the original and encrypted strings
-            uBit.serial.printf("\r\n Original Text of Salt: %s\r\n", originalTextSalt.c_str());
-            
-            // Send Salt
-            uBit.serial.printf("\r\n Encrypted Text: %s\r\n", encryptedTextSalt.c_str());
-            uBit.radio.datagram.send(const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(encryptedTextSalt.data())), encryptedTextSalt.size());
+            uBit.radio.datagram.send(const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(encryptedTexts2.data())), encryptedTexts2.size());
 
            
 
@@ -98,16 +100,21 @@ int main() {
 
         // Check if button B is pressed
         if (uBit.buttonB.isPressed()) {
-            std::string originalTextA = "Button B Pressed";
-            std::string encryptedText = encrypt(originalTextA, key, iv);
+
+            
+             
+            
+            std::string header = "bx";
+            std::string originalText = header.append(salt2);
+            std::string encryptedText = encrypt(originalText, key, iv);
+
+
 
             // Print the original and encrypted strings
-            uBit.serial.printf("\r\n Original Text: %s\n\r", originalTextA.c_str());
+            uBit.serial.printf("\r\n Original Text: %s\n\r", originalText.c_str());
             uBit.serial.printf("\r\n Encrypted Text: %s\n\r", encryptedText.c_str());
 
-             // Print the original and encrypted strings
-            uBit.serial.printf("\r\n Original Text of Salt: %s\r\n", originalTextSalt.c_str());
-            // Send Salt
+
 
             // // Decrypt the received message
             // std::string decryptedText = decrypt(encryptedText, key, iv);
@@ -115,13 +122,9 @@ int main() {
             // Send the encrypted message
             uBit.radio.datagram.send(const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(encryptedText.data())), encryptedText.size());
 
-              // Print the original and encrypted strings
-            uBit.serial.printf("\r\n Original Text of Salt: %s\r\n", originalTextSalt.c_str());
-            
-            // Send Salt
-            uBit.serial.printf("\r\n Encrypted Text: %s\r\n", encryptedTextSalt.c_str());
-            uBit.radio.datagram.send(const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(encryptedTextSalt.data())), encryptedTextSalt.size());
 
+            
+    
             // Introduce a delay before checking the button state again
             uBit.sleep(1000);
         }

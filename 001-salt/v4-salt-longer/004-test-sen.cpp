@@ -4,11 +4,25 @@
 #include <vector>
 #include "MicroBit.h"
 #include <cstring>
+#include <cstdint>
+#include <iomanip>
+#include <sstream>
 
 MicroBit uBit;
 
 #include "aes.c"
 #include "aes.h"
+
+
+// Function to perform XOR operation on two strings in hexadecimal representation
+std::string saltXOR(const std::string& str1, const std::string& str2) {
+    std::stringstream result;
+    for (size_t i = 0; i < str1.length() && i < str2.length(); ++i) {
+        result << std::hex << (std::stoi(str1.substr(i, 1), nullptr, 16) ^
+                   std::stoi(str2.substr(i, 1), nullptr, 16));
+    }
+    return result.str();
+}
 
 // Function to decrypt a string using TinyAES
 std::string decrypt(const std::string &input, const uint8_t *key, const uint8_t *iv) {
@@ -56,12 +70,25 @@ int main() {
 
     uint8_t iv[16] = {0x00};
 
-    std::string salt = "adb*hvywi28";
+    std::string salt = "ceb20772e0c9d240c75eb26b0e37abee";
+    std::string firstSalt = salt.substr(0, salt.length() / 2);
+    std::string secondSalt = salt.substr(salt.length() / 2);
+    uBit.serial.printf("\r\n firstSalt: %s\r\n",firstSalt.c_str());
+    uBit.serial.printf("\r\n secondSalt: %s\r\n", secondSalt.c_str());
+
+    std::string xorSalt = saltXOR(firstSalt, secondSalt);
+    uBit.serial.printf("\r\n xorSalt: %s\r\n", xorSalt.c_str());
+
+
+    std::string originalSalt = saltXOR(xorSalt, secondSalt);
+    originalSalt = firstSalt + originalSalt;
+    uBit.serial.printf("\r\n  originalSalt: %s\r\n", originalSalt.c_str());
+
+
+    
     // Add a head at the top of salt, so we can identify it in the receiver's side
     uBit.sleep(1000);
-    std::string head = "salt123";
-    std::string originalTextSalt = head.append(salt);
-    std::string encryptedTextSalt = encrypt(originalTextSalt, key, iv);
+    
 
     while (1) {
 
@@ -69,11 +96,18 @@ int main() {
             
         // Check if button A is pressed
         if (uBit.buttonA.isPressed()) {
-            std::string originalTextA = "Button A Pressed";
-            std::string encryptedText = encrypt(originalTextA, key, iv);
+
+            
+             
+            
+            std::string header = "a";
+            std::string originalText = header +  firstSalt + xorSalt;
+            // std::string originalTexts2 = header + salt2;
+            std::string encryptedText = encrypt(originalText, key, iv);
+            // std::string encryptedTexts2 = encrypt(originalTexts2, key, iv);
 
             // Print the original and encrypted strings
-            uBit.serial.printf("\r\n Original Text: %s\r\n", originalTextA.c_str());
+            uBit.serial.printf("\r\n Original Text: %s\r\n", originalText.c_str());
             uBit.serial.printf("\r\n\r Encrypted Text: %s\r\n", encryptedText.c_str());
 
             // // // Decrypt the received message
@@ -81,13 +115,7 @@ int main() {
             // uBit.serial.printf("\r\n*Decrypted Text: %s\r\n", decryptedText.c_str());
             // Send the encrypted message
             uBit.radio.datagram.send(const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(encryptedText.data())), encryptedText.size());
-
-             // Print the original and encrypted strings
-            uBit.serial.printf("\r\n Original Text of Salt: %s\r\n", originalTextSalt.c_str());
-            
-            // Send Salt
-            uBit.serial.printf("\r\n Encrypted Text: %s\r\n", encryptedTextSalt.c_str());
-            uBit.radio.datagram.send(const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(encryptedTextSalt.data())), encryptedTextSalt.size());
+            // uBit.radio.datagram.send(const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(encryptedTexts2.data())), encryptedTexts2.size());
 
            
 
@@ -98,30 +126,31 @@ int main() {
 
         // Check if button B is pressed
         if (uBit.buttonB.isPressed()) {
-            std::string originalTextA = "Button B Pressed";
-            std::string encryptedText = encrypt(originalTextA, key, iv);
+
+            
+             
+            
+            std::string header = "b";
+            std::string originalText = header +  firstSalt + xorSalt;
+
+            // std::string originalTexts2 = header + salt2;
+            std::string encryptedText = encrypt(originalText, key, iv);
+            // std::string encryptedTexts2 = encrypt(originalTexts2, key, iv);
 
             // Print the original and encrypted strings
-            uBit.serial.printf("\r\n Original Text: %s\n\r", originalTextA.c_str());
-            uBit.serial.printf("\r\n Encrypted Text: %s\n\r", encryptedText.c_str());
+            uBit.serial.printf("\r\n Original Text: %s\r\n", originalText.c_str());
+            uBit.serial.printf("\r\n\r Encrypted Text: %s\r\n", encryptedText.c_str());
 
-             // Print the original and encrypted strings
-            uBit.serial.printf("\r\n Original Text of Salt: %s\r\n", originalTextSalt.c_str());
-            // Send Salt
-
-            // // Decrypt the received message
+            // // // Decrypt the received message
             // std::string decryptedText = decrypt(encryptedText, key, iv);
-            // uBit.serial.printf("\n *Decrypted Text: %s\r\n", decryptedText.c_str());
+            // uBit.serial.printf("\r\n*Decrypted Text: %s\r\n", decryptedText.c_str());
             // Send the encrypted message
             uBit.radio.datagram.send(const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(encryptedText.data())), encryptedText.size());
+            // uBit.radio.datagram.send(const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(encryptedTexts2.data())), encryptedTexts2.size());
 
-              // Print the original and encrypted strings
-            uBit.serial.printf("\r\n Original Text of Salt: %s\r\n", originalTextSalt.c_str());
+
             
-            // Send Salt
-            uBit.serial.printf("\r\n Encrypted Text: %s\r\n", encryptedTextSalt.c_str());
-            uBit.radio.datagram.send(const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(encryptedTextSalt.data())), encryptedTextSalt.size());
-
+    
             // Introduce a delay before checking the button state again
             uBit.sleep(1000);
         }
