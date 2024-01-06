@@ -20,9 +20,91 @@
 #include "aes.h"
 
 
+
 MicroBit uBit;
 
+// Run commands
+// LED
+void runLed(){
+     // Variable holding the speed
+      int duty = 0;
+      // The instructions are inside a forever loop, the motor will speed up and slow down forever.
+      while(1)
+      {
+          // The first loop writes the value of the variable “duty” to Pin P0 and increases by 1 in every step until reaching the maximum value of the fan motor speed (1023).
+          while(duty < 1023)
+          {
+            uBit.io.P0.setAnalogValue(duty);
+            duty ++;
+            uBit.sleep(10);
+          }
+          // The second loop writes the value of the variable “duty” to Pin P0 and decreases by 1 in every step until reaching the reaching 0 (stopping the fan).
+          while(duty > 0)
+          {
+            uBit.io.P0.setAnalogValue(duty);
+            duty --;
+            uBit.sleep(10);
+          }
+      }
 
+}
+
+void runLightSensor(){
+  
+      // Run the command
+      // initialize an integer variable that will contain the brightness level.
+      int light=0;
+      while(1)
+      {
+        // Read the voltage at the pin P0 that is converted to a value in the range of 0 – 1024. It 
+        // represents the sensed lightness. 
+        light = uBit.io.P0.getAnalogValue(); 
+        if(light >= 200)
+        {
+          // Create then display a sun image
+          MicroBitImage smiley("0,255,255,255,0\n255,0,0,0,255\n255,0,0,0,255\n255,0,0,0,          255\n0,255,255,255,0\n");
+          uBit.display.print(smiley);
+        }
+        else
+        {
+          // Create then display a moon image
+          MicroBitImage 
+          smiley("0,0,255,255,255\n0,255,255,0,0\n255,255,0,0,0\n255,255,255,0,0\n0,255,255,255,255\n");
+          uBit.display.print(smiley);
+        }
+      }
+}
+
+void runFan(){
+  // Run the command
+        // Define LED pins
+        MicroBitPin P0(MICROBIT_ID_IO_P0, MICROBIT_PIN_P0, PIN_CAPABILITY_DIGITAL);
+        MicroBitPin P1(MICROBIT_ID_IO_P1, MICROBIT_PIN_P1, PIN_CAPABILITY_DIGITAL);
+        MicroBitPin P2(MICROBIT_ID_IO_P2, MICROBIT_PIN_P2, PIN_CAPABILITY_DIGITAL);
+
+        while(1) {
+          // Red - turn amber LED off and red LED on
+          P1.setDigitalValue(0);
+          P0.setDigitalValue(1);
+          uBit.sleep(4000); // Delay for 4 seconds
+
+          // Amber - turn red LED off and amber LED on
+          P0.setDigitalValue(0);
+          P1.setDigitalValue(1);
+          uBit.sleep(1000);
+
+          // Green - turn amber LED off and green LED on
+          P1.setDigitalValue(0);
+          P2.setDigitalValue(1);
+          uBit.sleep(4000);
+
+          // Amber - turn green LED off and amber LED on
+          P2.setDigitalValue(0);
+          P1.setDigitalValue(1);
+          uBit.sleep(1000);
+        }
+
+}
 
 std::string cyclicRotate(const std::string &originalString, int shift) {
   std::string rotatedString;
@@ -83,37 +165,25 @@ std::string decrypt(const std::string &input, const uint8_t *key, const uint8_t 
 // Event handler function for radio datagram events
 void onDataReceived(MicroBitEvent) {
 
-
     // Assuming receive expects a uint8_t* buffer and length
     uint8_t receivedData[256];  // Adjust the size as needed
     int receivedSize = uBit.radio.datagram.recv(receivedData, sizeof(receivedData));
     uBit.serial.printf("\n Received Size: %d \r\n", receivedSize);
 
-    std::string encryptedText(reinterpret_cast<char*>(receivedData), receivedSize);
-    uBit.serial.printf("\n Received Encrypted Text: %s \r\n", encryptedText.c_str());
-
-    // 128-bit key and IV (for AES-128)
-    uint8_t key[32] = {0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x97, 0x18, 0x09, 0xcf, 0x4f, 0x3c, 0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x97, 0x18, 0x09, 0xcf, 0x4f, 0x3c};
-    uint8_t iv[16] = {0x00};
-
-    // Decrypt the received message
-
+    std::string enc(reinterpret_cast<char*>(receivedData), receivedSize);
+    uBit.serial.printf("\n Received Encrypted Text: %s \r\n", enc.c_str());
 
     /** Salt */
-    std::string decryptedText = decrypt(encryptedText, key, iv);
-    uBit.serial.printf("\r\n Decrypted Text: %s \r\n", decryptedText.c_str());
-
-    std::string cmd = decryptedText.substr(0,2);
-    uBit.serial.printf("\r\n cmd Text: %s \r\n", cmd.c_str());
-    std::string sa1 = decryptedText.substr(2,16);
-    uBit.serial.printf("\r\n sa1 Text: %s \r\n", sa1.c_str());
+    std::string sa1 = enc.substr(0,2);
     std::string sa2 = cyclicRotate(sa1, 3);
-    uBit.serial.printf("\r\n sa2 Text: %s \r\n", sa2.c_str());
-    std::string salt = sa1 + sa2;
-    uBit.serial.printf("\r\n salt: %s \r\n", salt.c_str());
+    std::string salt = sa1+sa2;
     std::string k2 = md5(salt);
-    uBit.serial.printf("\r\n MD5 hashed salt Text: %s \r\n", k2.c_str());
-
+    
+    uBit.serial.printf("\r\n  Salt: %s\r\n", salt.c_str());
+    uBit.serial.printf("\r\n  k2: %s\r\n", k2.c_str());
+    
+    // The rest is cipher
+    std::string encryptedText = enc.substr(2);
     
     /**
      * Create k1 for dpk
@@ -121,7 +191,7 @@ void onDataReceived(MicroBitEvent) {
      * Step 2. Separate SHA256 hashed secret into two halves
      * Step 3. XOR two halves, and the result is k2
      */
-    // Import SHA256 Library
+    // // Import SHA256 Library
     SHA256 sha256;
 
     /**
@@ -158,102 +228,55 @@ void onDataReceived(MicroBitEvent) {
     dpk.append(k2);
     uBit.serial.printf("\r\n Received DPK: %s \r\n", dpk.c_str());
 
+    
+    /**
+     * Convert DPK into an uint8_t array for AES
+     * 256-bit key and IV (Not neccessary here)
+     * */
+    // 256-bit key 
+    uint8_t key[32] = {0x00};
+
+    for (size_t i = 0; i < 32; ++i) {
+        sscanf(dpk.substr(2 * i, 2).c_str(), "%02x",
+            (unsigned int *)&key[i]);
+    }
+    uint8_t iv[16] = {0x00};
+
+
+    std::string decryptedText = decrypt(encryptedText, key, iv);
+    uBit.serial.printf("\r\n Decrypted Text: %s \r\n", decryptedText.c_str());
 
     /**
      * Show Commands
      */
     // Use decrypted string to determine the button press
-    if (decryptedText.substr(0,2) == "zy") {
+    if (decryptedText.substr(0,2) == "bx") {
       uBit.display.print("3");
-      uBit.serial.printf("\r\n Command : %s \r\n", cmd.c_str());
+      uBit.serial.printf("\r\n Command : %s \r\n", decryptedText.substr(0,2).c_str());
       uBit.serial.printf("\r\n Run a fan! \r\n ");
-      
+      uBit.serial.printf("\r\n Hold on... \r\n ");
       // Run the command
-      // Variable holding the speed
-      int duty = 0;
-      // The instructions are inside a forever loop, the motor will speed up and slow down forever.
-      while(1)
-      {
-          // The first loop writes the value of the variable “duty” to Pin P0 and increases by 1 in every step until reaching the maximum value of the fan motor speed (1023).
-          while(duty < 1023)
-          {
-            uBit.io.P0.setAnalogValue(duty);
-            duty ++;
-            uBit.sleep(10);
-          }
-          // The second loop writes the value of the variable “duty” to Pin P0 and decreases by 1 in every step until reaching the reaching 0 (stopping the fan).
-          while(duty > 0)
-          {
-            uBit.io.P0.setAnalogValue(duty);
-            duty --;
-            uBit.sleep(10);
-          }
-      }
-
+      runFan();
+      uBit.sleep(3000);
     }
     if (decryptedText.substr(0,2) == "ax") {
       uBit.display.print("A");
-      uBit.serial.printf("\r\n Command : %s \r\n", cmd.c_str());
+      uBit.serial.printf("\r\n Command : %s \r\n", decryptedText.substr(0,2).c_str());
       uBit.serial.printf("\r\n Run Light Sensor! \r\n");
-      
+      uBit.serial.printf("\r\n Hold on... \r\n ");
       // Run the command
-      // initialize an integer variable that will contain the brightness level.
-      int light=0;
-      while(1)
-      {
-        // Read the voltage at the pin P0 that is converted to a value in the range of 0 – 1024. It 
-        // represents the sensed lightness. 
-        light = uBit.io.P0.getAnalogValue(); 
-        if(light >= 200)
-        {
-          // Create then display a sun image
-          MicroBitImage smiley("0,255,255,255,0\n255,0,0,0,255\n255,0,0,0,255\n255,0,0,0,          255\n0,255,255,255,0\n");
-          uBit.display.print(smiley);
-        }
-        else
-        {
-          // Create then display a moon image
-          MicroBitImage 
-          smiley("0,0,255,255,255\n0,255,255,0,0\n255,255,0,0,0\n255,255,255,0,0\n0,255,255,255,255\n");
-          uBit.display.print(smiley);
-        }
-      }
+      runLightSensor();
+      uBit.sleep(3000);
 
     }
-    if (decryptedText.substr(0,2) == "bx") {
+    if (decryptedText.substr(0,2) == "zy") {
         uBit.display.print("B");
-
-        uBit.serial.printf("\r\n Command : %s \r\n", cmd.c_str());
+        uBit.serial.printf("\r\n Command : %s \r\n", decryptedText.substr(0,2).c_str());
         uBit.serial.printf("\r\n Run LED! \r\n"); 
-
+        uBit.serial.printf("\r\n Hold on... \r\n ");
         // Run the command
-        // Define LED pins
-        MicroBitPin P0(MICROBIT_ID_IO_P0, MICROBIT_PIN_P0, PIN_CAPABILITY_DIGITAL);
-        MicroBitPin P1(MICROBIT_ID_IO_P1, MICROBIT_PIN_P1, PIN_CAPABILITY_DIGITAL);
-        MicroBitPin P2(MICROBIT_ID_IO_P2, MICROBIT_PIN_P2, PIN_CAPABILITY_DIGITAL);
-
-        while(1) {
-          // Red - turn amber LED off and red LED on
-          P1.setDigitalValue(0);
-          P0.setDigitalValue(1);
-          uBit.sleep(4000); // Delay for 4 seconds
-
-          // Amber - turn red LED off and amber LED on
-          P0.setDigitalValue(0);
-          P1.setDigitalValue(1);
-          uBit.sleep(1000);
-
-          // Green - turn amber LED off and green LED on
-          P1.setDigitalValue(0);
-          P2.setDigitalValue(1);
-          uBit.sleep(4000);
-
-          // Amber - turn green LED off and amber LED on
-          P2.setDigitalValue(0);
-          P1.setDigitalValue(1);
-          uBit.sleep(1000);
-        }
-
+        runLed();
+        uBit.sleep(3000);
     } 
 }
 

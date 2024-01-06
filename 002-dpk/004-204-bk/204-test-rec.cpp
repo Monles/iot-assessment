@@ -75,33 +75,33 @@ void runLightSensor(){
 }
 
 void runFan(){
-  // Run the command
-  // Define LED pins
-  MicroBitPin P0(MICROBIT_ID_IO_P0, MICROBIT_PIN_P0, PIN_CAPABILITY_DIGITAL);
-  MicroBitPin P1(MICROBIT_ID_IO_P1, MICROBIT_PIN_P1, PIN_CAPABILITY_DIGITAL);
-  MicroBitPin P2(MICROBIT_ID_IO_P2, MICROBIT_PIN_P2, PIN_CAPABILITY_DIGITAL);
+  // // Run the command
+        // // Define LED pins
+        // MicroBitPin P0(MICROBIT_ID_IO_P0, MICROBIT_PIN_P0, PIN_CAPABILITY_DIGITAL);
+        // MicroBitPin P1(MICROBIT_ID_IO_P1, MICROBIT_PIN_P1, PIN_CAPABILITY_DIGITAL);
+        // MicroBitPin P2(MICROBIT_ID_IO_P2, MICROBIT_PIN_P2, PIN_CAPABILITY_DIGITAL);
 
-  while(1) {
-    // Red - turn amber LED off and red LED on
-    P1.setDigitalValue(0);
-    P0.setDigitalValue(1);
-    uBit.sleep(4000); // Delay for 4 seconds
+        // while(1) {
+        //   // Red - turn amber LED off and red LED on
+        //   P1.setDigitalValue(0);
+        //   P0.setDigitalValue(1);
+        //   uBit.sleep(4000); // Delay for 4 seconds
 
-    // Amber - turn red LED off and amber LED on
-    P0.setDigitalValue(0);
-    P1.setDigitalValue(1);
-    uBit.sleep(1000);
+        //   // Amber - turn red LED off and amber LED on
+        //   P0.setDigitalValue(0);
+        //   P1.setDigitalValue(1);
+        //   uBit.sleep(1000);
 
-    // Green - turn amber LED off and green LED on
-    P1.setDigitalValue(0);
-    P2.setDigitalValue(1);
-    uBit.sleep(4000);
+        //   // Green - turn amber LED off and green LED on
+        //   P1.setDigitalValue(0);
+        //   P2.setDigitalValue(1);
+        //   uBit.sleep(4000);
 
-    // Amber - turn green LED off and amber LED on
-    P2.setDigitalValue(0);
-    P1.setDigitalValue(1);
-    uBit.sleep(1000);
-  }
+        //   // Amber - turn green LED off and amber LED on
+        //   P2.setDigitalValue(0);
+        //   P1.setDigitalValue(1);
+        //   uBit.sleep(1000);
+        // }
 
 }
 
@@ -166,45 +166,37 @@ void onDataReceived(MicroBitEvent) {
 
 
     // Assuming receive expects a uint8_t* buffer and length
-    uint8_t receivedData[512];  // Adjust the size as needed
+    uint8_t receivedData[256];  // Adjust the size as needed
     int receivedSize = uBit.radio.datagram.recv(receivedData, sizeof(receivedData));
     uBit.serial.printf("\n Received Size: %d \r\n", receivedSize);
 
     std::string encryptedText(reinterpret_cast<char*>(receivedData), receivedSize);
+    std::string aa = encryptedText;
     uBit.serial.printf("\n Received Encrypted Text: %s \r\n", encryptedText.c_str());
-    std::string sa1 = encryptedText.substr(0,4);
-    uBit.serial.printf("\n Received salt: %s \r\n", sa1.c_str());
-    std::string cipher = encryptedText.substr(4);
-    uBit.serial.printf("\n Received  cipher: %s \r\n", cipher.c_str());
+    uBit.serial.printf("\n Received aa: %s \r\n", aa.c_str());
 
-    // // 128-bit key and IV (for AES-128)
-    // uint8_t key[32] = {0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x97, 0x18, 0x09, 0xcf, 0x4f, 0x3c, 0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x97, 0x18, 0x09, 0xcf, 0x4f, 0x3c};
-    // uint8_t iv[16] = {0x00};
+    // AES-256
+    uint8_t key1[32] = {0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x97, 0x18, 0x09, 0xcf, 0x4f, 0x3c, 0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x97, 0x18, 0x09, 0xcf, 0x4f, 0x3c};
+    uint8_t iv[16] = {0x00};
 
-    // // // Decrypt the received message
+    // Decrypt the received message
 
 
-    // std::string decryptedText = decrypt(cipher, key, iv);
-    // uBit.serial.printf("\r\n Decrypted Text: %s \r\n", decryptedText.c_str());
+    /** Salt */
+    std::string decryptedText = decrypt(encryptedText, key1, iv);
+    uBit.serial.printf("\r\n Decrypted Text: %s \r\n", decryptedText.c_str());
 
-    // // std::string cmd = decryptedText.substr(0,2);
-    // // uBit.serial.printf("\r\n cmd Text: %s \r\n", cmd.c_str());
-    // // std::string sa1 = decryptedText.substr(2,16);
-    // // uBit.serial.printf("\r\n sa1 Text: %s \r\n", sa1.c_str());
-    // // std::string sa2 = cyclicRotate(sa1, 3);
-    // // uBit.serial.printf("\r\n sa2 Text: %s \r\n", sa2.c_str());
-    // // std::string salt = sa1 + sa2;
-    // // uBit.serial.printf("\r\n salt: %s \r\n", salt.c_str());
-    // // std::string k2 = md5(salt);
-    // // uBit.serial.printf("\r\n MD5 hashed salt Text: %s \r\n", k2.c_str());
-
+   
+    std::string sa1 = decryptedText.substr(0,4);
+    uBit.serial.printf("\r\n sa1 Text: %s \r\n", sa1.c_str());
     
-    // /**
-    //  * Create k1 for dpk
-    //  * Step 1. Use Sha256 to hash a shared secret
-    //  * Step 2. Separate SHA256 hashed secret into two halves
-    //  * Step 3. XOR two halves, and the result is k2
-    //  */
+    
+    /**
+     * Create k1 for dpk
+     * Step 1. Use Sha256 to hash a shared secret
+     * Step 2. Separate SHA256 hashed secret into two halves
+     * Step 3. XOR two halves, and the result is k2
+     */
     // // Import SHA256 Library
     // SHA256 sha256;
 
@@ -243,11 +235,11 @@ void onDataReceived(MicroBitEvent) {
     // uBit.serial.printf("\r\n Received DPK: %s \r\n", dpk.c_str());
 
     
-    // /**
-    //  * Convert DPK into an uint8_t array for AES
-    //  * 256-bit key and IV (Not neccessary here)
-    //  * */
-    // // 256-bit key 
+    /**
+     * Convert DPK into an uint8_t array for AES
+     * 256-bit key and IV (Not neccessary here)
+     * */
+    // 256-bit key 
     // uint8_t key[32] = {0x00};
 
     // for (size_t i = 0; i < 32; ++i) {
@@ -258,36 +250,36 @@ void onDataReceived(MicroBitEvent) {
     /**
      * Show Commands
      */
-//     // Use decrypted string to determine the button press
-//     if (decryptedText.substr(0,2) == "bx") {
-//       uBit.display.print("3");
-//       uBit.serial.printf("\r\n Command : %s \r\n", cmd.c_str());
-//       uBit.serial.printf("\r\n Run a fan! \r\n ");
-//       uBit.serial.printf("\r\n Hold on... \r\n ");
-//       // Run the command
-//       runFan();
-//       uBit.sleep(3000);
-//     }
-//     if (decryptedText.substr(0,2) == "ax") {
-//       uBit.display.print("A");
-//       uBit.serial.printf("\r\n Command : %s \r\n", cmd.c_str());
-//       uBit.serial.printf("\r\n Run Light Sensor! \r\n");
-//       uBit.serial.printf("\r\n Hold on... \r\n ");
-//       // Run the command
-//       runLightSensor();
-//       uBit.sleep(3000);
+    // Use decrypted string to determine the button press
+    // if (decryptedText.substr(0,2) == "bx") {
+    //   uBit.display.print("3");
+    //   uBit.serial.printf("\r\n Command : %s \r\n", cmd.c_str());
+    //   uBit.serial.printf("\r\n Run a fan! \r\n ");
+    //   uBit.serial.printf("\r\n Hold on... \r\n ");
+    //   // Run the command
+    //   runFan();
+    //   uBit.sleep(3000);
+    // }
+    // if (decryptedText.substr(0,2) == "ax") {
+    //   uBit.display.print("A");
+    //   uBit.serial.printf("\r\n Command : %s \r\n", cmd.c_str());
+    //   uBit.serial.printf("\r\n Run Light Sensor! \r\n");
+    //   uBit.serial.printf("\r\n Hold on... \r\n ");
+    //   // Run the command
+    //   runLightSensor();
+    //   uBit.sleep(3000);
 
-//     }
-//     if (decryptedText.substr(0,2) == "zy") {
-//         uBit.display.print("B");
+    // }
+    // if (decryptedText.substr(0,2) == "zy") {
+    //     uBit.display.print("B");
 
-//         uBit.serial.printf("\r\n Command : %s \r\n", cmd.c_str());
-//         uBit.serial.printf("\r\n Run LED! \r\n"); 
-//         uBit.serial.printf("\r\n Hold on... \r\n ");
-//         // Run the command
-//         runLed();
-//         uBit.sleep(3000);
-//     } 
+    //     uBit.serial.printf("\r\n Command : %s \r\n", cmd.c_str());
+    //     uBit.serial.printf("\r\n Run LED! \r\n"); 
+    //     uBit.serial.printf("\r\n Hold on... \r\n ");
+    //     // Run the command
+    //     runLed();
+    //     uBit.sleep(3000);
+    // } 
 }
 
 
