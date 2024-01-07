@@ -1,4 +1,3 @@
-
 #include "MicroBit.h"
 #include "MicroBitUARTService.h"
 #include <iostream>
@@ -23,9 +22,14 @@
 
 MicroBit uBit;
 
+
+
 // Run commands
 // LED
 void runLed(){
+      // Sets the radio to listen to packets sent with the given group id.
+      uBit.radio.setGroup(83);
+      uBit.radio.enable();
      // Variable holding the speed
       int duty = 0;
       // The instructions are inside a forever loop, the motor will speed up and slow down forever.
@@ -50,7 +54,9 @@ void runLed(){
 }
 
 void runLightSensor(){
-  
+      // Sets the radio to listen to packets sent with the given group id.
+      uBit.radio.setGroup(83);
+      uBit.radio.enable();
       // Run the command
       // initialize an integer variable that will contain the brightness level.
       int light=0;
@@ -76,33 +82,36 @@ void runLightSensor(){
 }
 
 void runFan(){
+  // Sets the radio to listen to packets sent with the given group id.
+  uBit.radio.setGroup(83);
+  uBit.radio.enable();
   // Run the command
-        // Define LED pins
-        MicroBitPin P0(MICROBIT_ID_IO_P0, MICROBIT_PIN_P0, PIN_CAPABILITY_DIGITAL);
-        MicroBitPin P1(MICROBIT_ID_IO_P1, MICROBIT_PIN_P1, PIN_CAPABILITY_DIGITAL);
-        MicroBitPin P2(MICROBIT_ID_IO_P2, MICROBIT_PIN_P2, PIN_CAPABILITY_DIGITAL);
+  // Define LED pins
+  MicroBitPin P0(MICROBIT_ID_IO_P0, MICROBIT_PIN_P0, PIN_CAPABILITY_DIGITAL);
+  MicroBitPin P1(MICROBIT_ID_IO_P1, MICROBIT_PIN_P1, PIN_CAPABILITY_DIGITAL);
+  MicroBitPin P2(MICROBIT_ID_IO_P2, MICROBIT_PIN_P2, PIN_CAPABILITY_DIGITAL);
 
-        while(1) {
-          // Red - turn amber LED off and red LED on
-          P1.setDigitalValue(0);
-          P0.setDigitalValue(1);
-          uBit.sleep(4000); // Delay for 4 seconds
+  while(1) {
+    // Red - turn amber LED off and red LED on
+    P1.setDigitalValue(0);
+    P0.setDigitalValue(1);
+    uBit.sleep(4000); // Delay for 4 seconds
 
-          // Amber - turn red LED off and amber LED on
-          P0.setDigitalValue(0);
-          P1.setDigitalValue(1);
-          uBit.sleep(1000);
+    // Amber - turn red LED off and amber LED on
+    P0.setDigitalValue(0);
+    P1.setDigitalValue(1);
+    uBit.sleep(1000);
 
-          // Green - turn amber LED off and green LED on
-          P1.setDigitalValue(0);
-          P2.setDigitalValue(1);
-          uBit.sleep(4000);
+    // Green - turn amber LED off and green LED on
+    P1.setDigitalValue(0);
+    P2.setDigitalValue(1);
+    uBit.sleep(4000);
 
-          // Amber - turn green LED off and amber LED on
-          P2.setDigitalValue(0);
-          P1.setDigitalValue(1);
-          uBit.sleep(1000);
-        }
+    // Amber - turn green LED off and amber LED on
+    P2.setDigitalValue(0);
+    P1.setDigitalValue(1);
+    uBit.sleep(1000);
+  }
 
 }
 
@@ -145,7 +154,32 @@ std::string xorHexStrings(const std::string &str1, const std::string &str2) {
     return result.str();
 }
 
-// Function to decrypt a string using TinyAES
+/**
+ * AES-ECB-256 
+ * Step 1. Encryption 
+ * Step 2. Decryption
+ */
+
+// step 1. Function to encrypt a string using TinyAES
+std::string encrypt(const std::string &input, const uint8_t *key, const uint8_t *iv) {
+    std::vector<uint8_t> inputBytes(input.begin(), input.end());
+
+    // Pad the input if needed
+    size_t padding = 16 - (inputBytes.size() % 16);
+    if (padding != 0) {
+        inputBytes.insert(inputBytes.end(), padding, static_cast<uint8_t>(padding));
+    }
+
+    AES_ctx ctx;
+    AES_init_ctx(&ctx, key);
+
+    // Encrypt the data
+    AES_ECB_encrypt(&ctx, inputBytes.data());
+
+    return std::string(inputBytes.begin(), inputBytes.end());
+}
+
+// Step 2. Function to decrypt a string using TinyAES
 std::string decrypt(const std::string &input, const uint8_t *key, const uint8_t *iv) {
     std::vector<uint8_t> inputBytes(input.begin(), input.end());
 
@@ -162,6 +196,7 @@ std::string decrypt(const std::string &input, const uint8_t *key, const uint8_t 
     return std::string(inputBytes.begin(), inputBytes.end());
 }
 
+
 // Event handler function for radio datagram events
 void onDataReceived(MicroBitEvent) {
 
@@ -174,16 +209,16 @@ void onDataReceived(MicroBitEvent) {
     uBit.serial.printf("\n Received Encrypted Text: %s \r\n", enc.c_str());
 
     /** Salt */
-    std::string sa1 = enc.substr(0,16);
+    std::string sa1 = enc.substr(0,4);
     std::string sa2 = cyclicRotate(sa1, 3);
-    std::string salt = sa1+sa2;
+    std::string sa = sa1+sa2;
+    std::string salt = sa+sa;
     std::string k2 = md5(salt);
     
     uBit.serial.printf("\r\n  Salt: %s\r\n", salt.c_str());
     uBit.serial.printf("\r\n  k2: %s\r\n", k2.c_str());
     
-    // The rest is cipher
-    std::string encryptedText = enc.substr(16);
+    
     
     /**
      * Create k1 for dpk
@@ -224,8 +259,8 @@ void onDataReceived(MicroBitEvent) {
      * DPK = k1 + k2
      * which used as a key for AES-ECB-256 to encrypt the command
      */
-    std::string dpk = k1;
-    dpk.append(k2);
+    std::string kk = k1;
+    std::string dpk = kk + k2;
     uBit.serial.printf("\r\n Received DPK: %s \r\n", dpk.c_str());
 
     
@@ -233,18 +268,25 @@ void onDataReceived(MicroBitEvent) {
      * Convert DPK into an uint8_t array for AES
      * 256-bit key and IV (Not neccessary here)
      * */
-    // 256-bit key 
+   // 256-bit key 
     uint8_t key[32] = {0x00};
-
-    for (size_t i = 0; i < 32; ++i) {
-        sscanf(dpk.substr(2 * i, 2).c_str(), "%02x",
-            (unsigned int *)&key[i]);
+    
+    for (int i = 0; i < 32; ++i) {
+      std::string byteString = dpk.substr(i * 2, 2);
+      int byteValue = std::stoi(byteString, nullptr, 16);
+      key[i] = static_cast<uint8_t>(byteValue);
     }
+    // for (size_t i = 0; i < 32; ++i) {
+    //     sscanf(dpk.substr(2 * i, 2).c_str(), "%02x",(unsigned int *)&key[i]);
+    // }
     uint8_t iv[16] = {0x00};
-
+    // The rest is cipher
+    std::string encryptedText = enc.substr(4);
+    uBit.serial.printf("\r\n  encryptedText: %s\r\n", encryptedText.c_str());
 
     std::string decryptedText = decrypt(encryptedText, key, iv);
     uBit.serial.printf("\r\n Decrypted Text: %s \r\n", decryptedText.c_str());
+
 
     /**
      * Show Commands
@@ -257,7 +299,7 @@ void onDataReceived(MicroBitEvent) {
       uBit.serial.printf("\r\n Hold on... \r\n ");
       // Run the command
       runFan();
-      uBit.sleep(3000);
+      uBit.sleep(1000);
     }
     if (decryptedText.substr(0,2) == "ax") {
       uBit.display.print("A");
@@ -266,17 +308,17 @@ void onDataReceived(MicroBitEvent) {
       uBit.serial.printf("\r\n Hold on... \r\n ");
       // Run the command
       runLightSensor();
-      uBit.sleep(3000);
+      uBit.sleep(1000);
 
     }
-    if (decryptedText.substr(0,2) == "zy") {
+    if (decryptedText.substr(0,2) == "ab") {
         uBit.display.print("B");
         uBit.serial.printf("\r\n Command : %s \r\n", decryptedText.substr(0,2).c_str());
         uBit.serial.printf("\r\n Run LED! \r\n"); 
         uBit.serial.printf("\r\n Hold on... \r\n ");
         // Run the command
         runLed();
-        uBit.sleep(3000);
+        uBit.sleep(1000);
     } 
 }
 
@@ -294,10 +336,11 @@ int main() {
 
     // Register the event handler function for radio datagram events
     uBit.messageBus.listen(MICROBIT_ID_RADIO,MICROBIT_RADIO_EVT_DATAGRAM, onDataReceived);
-   
     while (1) {
+        
         uBit.sleep(100);
     }
 
+    release_fiber();
     return 0;
 }

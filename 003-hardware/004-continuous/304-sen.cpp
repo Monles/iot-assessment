@@ -36,7 +36,8 @@ MicroBit uBit;
 
 // step 1 - sa1
 std::string generateSalt(int length) {
-  const std::string charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  const std::string charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUV"
+                              "WXYZ0123456789!£$%^&*():@~#'?/><.,;[]|";
   std::random_device rd;
   std::mt19937 gen(rd());
   std::uniform_int_distribution<int> distribution(0, charset.size() - 1);
@@ -109,7 +110,6 @@ std::string decrypt(const std::string &input, const uint8_t *key, const uint8_t 
 }
 
 
-
 /**
  * XOR two Halves in a SHA256 hashed string
  * Step 1. Two halves should have same length
@@ -141,9 +141,9 @@ int main() {
     uBit.init();
     // Sets the radio to listen to packets sent with the given group id.
     uBit.radio.setGroup(83);
+    uBit.radio.enable();
     // Printing "S" means Sender
     uBit.display.print("S");
-    uBit.radio.enable();
 
     uBit.serial.printf("\n*********Sender is Here for service********\n\r");
    
@@ -154,10 +154,11 @@ int main() {
      * which translates to 16 bytes or 32 characters in a string 
      * (assuming each byte is represented by two hexadecimal characters).
      */
-    int saltLength = 16; 
+    int saltLength = 8; 
     std::string sa1 = generateSalt(saltLength);
     std::string sa2 = cyclicRotate(sa1, 3);
-    std::string salt = sa1+sa2;
+    std::string sa = sa1+sa2;
+    std::string salt = sa+sa;
     std::string k2 = md5(salt);
     
     uBit.serial.printf("\r\n  Salt: %s\r\n", salt.c_str());
@@ -235,9 +236,9 @@ int main() {
     /**
      * Press 1 of 3 buttons to send the command to the reciver
      * When the receiver gets the command, one device will be triggered
-     * Button A - Lighte Sensor
-     * Button B - LED
-     * Button A + B - Fan
+     * Button A - Light Sensor
+     * Button B - Fan
+     * Button A + B - LED
      */
     uBit.serial.printf("\r\n*******Press a button to send a command*******\n\r");
     uBit.serial.printf("\r\n*******3 Options: A, B or A + B*******\n\r");
@@ -250,55 +251,40 @@ int main() {
      * */
 
     // 256-bit key 
-    uint8_t key[32] = {0x00};
-
-    for (size_t i = 0; i < 32; ++i) {
-        sscanf(dpk.substr(2 * i, 2).c_str(), "%02x",
-            (unsigned int *)&key[i]);
+    uint8_t key[32]={0x00};
+    
+    for (int i = 0; i < 32; ++i) {
+      std::string byteString = dpk.substr(i * 2, 2);
+      int byteValue = std::stoi(byteString, nullptr, 16);
+      key[i] = static_cast<uint8_t>(byteValue);
     }
+    // for (size_t i = 0; i < 32; ++i) {
+    //     sscanf(dpk.substr(2 * i, 2).c_str(), "%02x",(unsigned int *)&key[i]);
+    // }
 
     // This is the dummy key for testing purpose
     // uint8_t key[32] = {0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x97, 0x18, 0x09, 0xcf, 0x4f, 0x3c, 0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x97, 0x18, 0x09, 0xcf, 0x4f, 0x3c};
 
     uint8_t iv[16] = {0x00};
 
-    uBit.sleep(1000);
     
 
     while (1) {
-        // Check if button A + b both are pressed
-        if (uBit.buttonA.isPressed() && uBit.buttonB.isPressed()) {
-
-            // Create a text combined with command + salt(first 16 characters)
-            std::string command = "zy";
-            std::string originalText = command;
-            // Use AES-ECB-256 to ecrypt the text
-            std::string encryptedText= sa1 + encrypt(originalText, key, iv);
-            // std::string encryptedText2 = encrypt(encryptedText, key, iv);
-
-            // Print the original and encrypted strings
-            uBit.serial.printf("\r\n command(The first 2 chars) + salt: %s\r\n", originalText.c_str());
-            uBit.serial.printf("\r\n\r Encrypted Text: %s\r\n", encryptedText.c_str());
-
-            // Send the encrypted message
-            uBit.radio.datagram.send(const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(encryptedText.data())), encryptedText.size());
-
-            // Introduce a delay before checking the button state again
-            uBit.sleep(1000);
-        }
+        
 
             
         // Check if button A is pressed
         if (uBit.buttonA.isPressed()) {
+            uBit.display.scrollAsync("A Sending a cipher...");
+            
             // Create a text combined with command + salt(first 16 characters)
-            std::string command = "ax";
-            std::string originalText = command;
+            std::string originalText = "ax";
             // Use AES-ECB-256 to ecrypt the text
             std::string encryptedText = sa1 + encrypt(originalText, key, iv);
 
             // Print the original and encrypted strings
             uBit.serial.printf("\r\n  command(The first 2 chars) + salt: %s\r\n", originalText.c_str());
-            uBit.serial.printf("\r\n\r Encrypted Text: %s\r\n", encryptedText.c_str());
+            uBit.serial.printf("\r\n  Encrypted Text: %s\r\n", encryptedText.c_str());
 
             // Send the encrypted message
             uBit.radio.datagram.send(const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(encryptedText.data())), encryptedText.size());
@@ -311,17 +297,20 @@ int main() {
 
         // Check if button B is pressed
         if (uBit.buttonB.isPressed()) {
-
+            uBit.display.scrollAsync("B Sending a cipher...");
+            
             // Create a text combined with command + salt(first 16 characters)
-            std::string command = "bx";
-            std::string originalText = command;
+            std::string originalText = "bx";
 
             // Use AES-ECB-256 to ecrypt the text
             std::string encryptedText = sa1 + encrypt(originalText, key, iv);
 
             // Print the original and encrypted strings
             uBit.serial.printf("\r\n  command(The first 2 chars) + salt: %s\r\n", originalText.c_str());
-            uBit.serial.printf("\r\n\r Encrypted Text: %s\r\n", encryptedText.c_str());
+            uBit.serial.printf("\r\n Encrypted Text: %s\r\n", encryptedText.c_str());
+
+            std::string decryptedText = decrypt(encryptedText, key, iv);
+            uBit.serial.printf("\r\n Decrypted Text: %s \r\n", decryptedText.c_str());
 
             // Send the encrypted message
             uBit.radio.datagram.send(const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(encryptedText.data())), encryptedText.size());
@@ -329,7 +318,28 @@ int main() {
             // Introduce a delay before checking the button state again
             uBit.sleep(1000);
         }
-    }
 
+        // Check if button A + b both are pressed
+        if (uBit.buttonA.isPressed() && uBit.buttonB.isPressed()) {
+            uBit.display.scrollAsync("A+B Sending a cipher...");
+            
+            // Create a text combined with command + salt(first 16 characters)
+            std::string originalText = "ab";
+            // Use AES-ECB-256 to ecrypt the text
+            std::string encryptedText= sa1 + encrypt(originalText, key, iv);
+            // std::string encryptedText2 = encrypt(encryptedText, key, iv);
+
+            // Print the original and encrypted strings
+            uBit.serial.printf("\r\n command(The first 2 chars) + salt: %s\r\n", originalText.c_str());
+            uBit.serial.printf("\r\n Encrypted Text: %s\r\n", encryptedText.c_str());
+
+            // Send the encrypted message
+            uBit.radio.datagram.send(const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(encryptedText.data())), encryptedText.size());
+
+            // Introduce a delay before checking the button state again
+            uBit.sleep(1000);
+        }
+         uBit.sleep(1000);
+    }
     return 0;
 }

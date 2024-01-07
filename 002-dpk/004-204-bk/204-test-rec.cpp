@@ -61,7 +61,7 @@ void runLightSensor(){
         if(light >= 200)
         {
           // Create then display a sun image
-          MicroBitImage smiley("0,255,255,255,0\n255,0,0,0,255\n255,0,0,0,255\n255,0,0,0,          255\n0,255,255,255,0\n");
+          MicroBitImage smiley("0,255,255,255,0\n255,0,0,0,255\n255,0,0,0,255\n255,0,0,0,255\n0,255,255,255,0\n");
           uBit.display.print(smiley);
         }
         else
