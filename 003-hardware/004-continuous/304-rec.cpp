@@ -302,51 +302,46 @@ void onDataReceived(MicroBitEvent) {
     uBit.display.print("A");
       uBit.sleep(1000);
 
-      uBit.display.scrollAsync("Run!!!");
+      uBit.display.scrollAsync("Run LED + FAN!!!");
       uBit.serial.printf("\r\n Command : %s \r\n", decryptedText.substr(0,2).c_str());
-      uBit.serial.printf("\r\n Run the Command! \r\n");
+      uBit.serial.printf("\r\n Run the Command! Run LED + FAN!!! \r\n");
       uBit.serial.printf("\r\n Hold on... \r\n ");
       // Run the command
       runLed();
       uBit.sleep(1000);
       runFan();
       uBit.sleep(1000);
-        runLightSensor();
-      uBit.sleep(1000);
+ 
 
     }
      // Use decrypted string to determine the button press
     if (decryptedText.substr(0,2) == "bx") {
       uBit.display.print("3");
        uBit.sleep(1000);
-      uBit.display.scrollAsync("Run!!!");
+      uBit.display.scrollAsync("Run Light Sensor!!!");
       uBit.serial.printf("\r\n Command : %s \r\n", decryptedText.substr(0,2).c_str());
-      uBit.serial.printf("\r\n Run the Command! \r\n");
+      uBit.serial.printf("\r\n Run the Command! Run Light Sensor!!! \r\n");
 
       uBit.serial.printf("\r\n Hold on... \r\n ");
       // Run the command
-      runLed();
-      uBit.sleep(1000);
-      runFan();
-      uBit.sleep(1000);
-        runLightSensor();
+      
+      runLightSensor();
       uBit.sleep(1000);
     }
     if (decryptedText.substr(0,2) == "ab") {
         uBit.display.print("B");
          uBit.sleep(1000);
-        uBit.display.scrollAsync("Run!!!");
+        uBit.display.scrollAsync("Run LED + Light Sensor!!!");
         uBit.serial.printf("\r\n Command : %s \r\n", decryptedText.substr(0,2).c_str());
-      uBit.serial.printf("\r\n Run the Command! \r\n");
+      uBit.serial.printf("\r\n Run the Command! LED + Light Sensor!!! \r\n");
 
         uBit.serial.printf("\r\n Hold on... \r\n ");
         // Run the command
         runLed();
         uBit.sleep(1000);
-        runFan();
+        runLightSensor();
         uBit.sleep(1000);
-            runLightSensor();
-        uBit.sleep(1000);
+
     } 
 }
 
