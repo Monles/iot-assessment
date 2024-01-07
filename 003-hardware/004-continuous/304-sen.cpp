@@ -22,6 +22,31 @@
 
 MicroBit uBit;
 
+void onButton(MicroBitEvent e)
+{
+    /**
+     * Press A and B
+     */
+    if (e.source == MICROBIT_ID_BUTTON_AB){
+        uBit.serial.printf("\r\n  BUTTON A+B:  \r\n");
+        uBit.display.print("3");
+    }
+    /**
+     * Press A or B
+     */
+    else{
+      if (e.source == MICROBIT_ID_BUTTON_A){
+        uBit.serial.printf("\r\n  BUTTON A:  \r\n");
+        uBit.display.print("A");
+      }
+      if (e.source == MICROBIT_ID_BUTTON_B){
+        uBit.serial.printf("\r\n  BUTTON B:  \r\n");
+        uBit.display.printChar('B');
+      }
+    }
+}
+
+
 /**
  * Salt Generation 
  * Step 1. generate 16 characters randomly (sa1)
@@ -236,9 +261,9 @@ int main() {
     /**
      * Press 1 of 3 buttons to send the command to the reciver
      * When the receiver gets the command, one device will be triggered
-     * Button A - Light Sensor
-     * Button B - Fan
-     * Button A + B - LED
+     * Button A - Fan + LED
+     * Button B - Light Sensor
+     * Button A + B - LED + Light Sensor
      */
     uBit.serial.printf("\r\n*******Press a button to send a command*******\n\r");
     uBit.serial.printf("\r\n*******3 Options: A, B or A + B*******\n\r");
@@ -247,7 +272,6 @@ int main() {
     /**
      * Convert DPK into an uint8_t array for AES
      * 256-bit key and IV (Not neccessary here)
-     * 
      * */
 
     // 256-bit key 
@@ -267,7 +291,10 @@ int main() {
 
     uint8_t iv[16] = {0x00};
 
-    
+    // Register to receive events when any buttons are clicked, including the A+B virtual button (both buttons at once).
+    uBit.messageBus.listen(MICROBIT_ID_BUTTON_A, MICROBIT_EVT_ANY, onButton);
+    uBit.messageBus.listen(MICROBIT_ID_BUTTON_B, MICROBIT_EVT_ANY, onButton);
+    uBit.messageBus.listen(MICROBIT_ID_BUTTON_AB, MICROBIT_EVT_ANY, onButton);
 
     while (1) {
         
@@ -317,7 +344,7 @@ int main() {
         }
 
         // Check if button A + b both are pressed
-        else if (uBit.buttonA.isPressed() && uBit.buttonB.isPressed()) {
+        else if (uBit.buttonB.isPressed() && uBit.buttonA.isPressed()) {
            uBit.display.scrollAsync("C Sending a cipher...");
             
             // Create a text combined with command + salt(first 16 characters)

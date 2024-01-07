@@ -314,7 +314,7 @@ void onDataReceived(MicroBitEvent) {
 
     }
      // Use decrypted string to determine the button press
-    if (decryptedText.substr(0,2) == "bx") {
+    else if (decryptedText.substr(0,2) == "bx") {
       uBit.display.print("B");
       uBit.sleep(1000);
       uBit.display.scrollAsync("Run Light Sensor!!!");
@@ -323,11 +323,10 @@ void onDataReceived(MicroBitEvent) {
 
       uBit.serial.printf("\r\n Hold on... \r\n ");
       // Run the command
-      
       runLightSensor();
       uBit.sleep(1000);
     }
-    if (decryptedText.substr(0,2) == "cx") {
+    else if (decryptedText.substr(0,2) == "cx") {
         uBit.display.print("C");
          uBit.sleep(1000);
         uBit.display.scrollAsync("Run LED + Light Sensor!!!");
