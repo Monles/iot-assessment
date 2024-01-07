@@ -31,37 +31,35 @@ MicroBit uBit;
 
 
 
-// Run commands
-// LED
-void runLed(){
-    uBit.display.scrollAsync("LED");
-     // Variable holding the speed
-      int duty = 0;
-      // The instructions are inside a forever loop, the motor will speed up and slow down forever.
-      while(1)
-      {
-          // The first loop writes the value of the variable “duty” to Pin P0 and increases by 1 in every step until reaching the maximum value of the fan motor speed (1023).
-          while(duty < 1023)
-          {
+// Fan
+void runFan(){
+    uBit.display.scrollAsync("Fan");
+    // Variable holding the speed
+    int duty = 0;
+    // The instructions are inside a forever loop, the motor will speed up and slow down forever.
+    while(1)
+    {
+        // The first loop writes the value of the variable “duty” to Pin P0 and increases by 1 in every step until reaching the maximum value of the fan motor speed (1023).
+        while(duty < 1023)
+        {
             uBit.io.P0.setAnalogValue(duty);
             duty ++;
             uBit.sleep(10);
-          }
-          // The second loop writes the value of the variable “duty” to Pin P0 and decreases by 1 in every step until reaching the reaching 0 (stopping the fan).
-          while(duty > 0)
-          {
+        }
+        // The second loop writes the value of the variable “duty” to Pin P0 and decreases by 1 in every step until reaching the reaching 0 (stopping the fan).
+        while(duty > 0)
+        {
             uBit.io.P0.setAnalogValue(duty);
             duty --;
             uBit.sleep(10);
-          }
-
-          runLightSensor();
-          runFan();
-
-      }
+        }
+    }
 
 }
 
+
+
+// Run commands
 void runLightSensor(){
       uBit.display.scrollAsync("Light Sensor");
       // Run the command
@@ -75,7 +73,7 @@ void runLightSensor(){
         if(light >= 200)
         {
           // Create then display a sun image
-          MicroBitImage smiley("0,255,255,255,0\n255,0,0,0,255\n255,0,0,0,255\n255,0,0,0,          255\n0,255,255,255,0\n");
+          MicroBitImage smiley("0,255,255,255,0\n255,0,0,0,255\n255,0,0,0,255\n255,0,0,0,255\n0,255,255,255,0\n");
           uBit.display.print(smiley);
         }
         else
@@ -85,40 +83,43 @@ void runLightSensor(){
           smiley("0,0,255,255,255\n0,255,255,0,0\n255,255,0,0,0\n255,255,255,0,0\n0,255,255,255,255\n");
           uBit.display.print(smiley);
         }
+        runFan();
       }
 }
 
-void runFan(){
-    uBit.display.scrollAsync("Fan");
-  // Run the command
-        // Define LED pins
-        MicroBitPin P0(MICROBIT_ID_IO_P0, MICROBIT_PIN_P0, PIN_CAPABILITY_DIGITAL);
-        MicroBitPin P1(MICROBIT_ID_IO_P1, MICROBIT_PIN_P1, PIN_CAPABILITY_DIGITAL);
-        MicroBitPin P2(MICROBIT_ID_IO_P2, MICROBIT_PIN_P2, PIN_CAPABILITY_DIGITAL);
+void runLed(){
+    uBit.display.scrollAsync("LED");
+    // Run the command
+    // Define LED pins
+    MicroBitPin P0(MICROBIT_ID_IO_P0, MICROBIT_PIN_P0, PIN_CAPABILITY_DIGITAL);
+    MicroBitPin P1(MICROBIT_ID_IO_P1, MICROBIT_PIN_P1, PIN_CAPABILITY_DIGITAL);
+    MicroBitPin P2(MICROBIT_ID_IO_P2, MICROBIT_PIN_P2, PIN_CAPABILITY_DIGITAL);
 
-        while(1) {
-          // Red - turn amber LED off and red LED on
-          P1.setDigitalValue(0);
-          P0.setDigitalValue(1);
-          uBit.sleep(4000); // Delay for 4 seconds
+    while(1) {
+        // Red - turn amber LED off and red LED on
+        P1.setDigitalValue(0);
+        P0.setDigitalValue(1);
+        uBit.sleep(4000); // Delay for 4 seconds
 
-          // Amber - turn red LED off and amber LED on
-          P0.setDigitalValue(0);
-          P1.setDigitalValue(1);
-          uBit.sleep(1000);
+        // Amber - turn red LED off and amber LED on
+        P0.setDigitalValue(0);
+        P1.setDigitalValue(1);
+        uBit.sleep(1000);
 
-          // Green - turn amber LED off and green LED on
-          P1.setDigitalValue(0);
-          P2.setDigitalValue(1);
-          uBit.sleep(4000);
+        // Green - turn amber LED off and green LED on
+        P1.setDigitalValue(0);
+        P2.setDigitalValue(1);
+        uBit.sleep(4000);
 
-          // Amber - turn green LED off and amber LED on
-          P2.setDigitalValue(0);
-          P1.setDigitalValue(1);
-          uBit.sleep(1000);
-        }
+        // Amber - turn green LED off and amber LED on
+        P2.setDigitalValue(0);
+        P1.setDigitalValue(1);
+        uBit.sleep(1000);
+    }
+    
 
 }
+
 std::string cyclicRotate(const std::string &originalString, int shift) {
   std::string rotatedString;
   size_t length = originalString.length();
@@ -298,19 +299,19 @@ void onDataReceived(MicroBitEvent) {
    
     if (decryptedText.substr(0,2) == "ax") {
 
-      uBit.display.print("A");
+    uBit.display.print("A");
       uBit.sleep(1000);
 
       uBit.display.scrollAsync("Run!!!");
       uBit.serial.printf("\r\n Command : %s \r\n", decryptedText.substr(0,2).c_str());
-      uBit.serial.printf("\r\n Run Light Sensor! \r\n");
+      uBit.serial.printf("\r\n Run the Command! \r\n");
       uBit.serial.printf("\r\n Hold on... \r\n ");
       // Run the command
       runLed();
       uBit.sleep(1000);
       runFan();
       uBit.sleep(1000);
-      runLightSensor();
+        runLightSensor();
       uBit.sleep(1000);
 
     }
@@ -320,14 +321,15 @@ void onDataReceived(MicroBitEvent) {
        uBit.sleep(1000);
       uBit.display.scrollAsync("Run!!!");
       uBit.serial.printf("\r\n Command : %s \r\n", decryptedText.substr(0,2).c_str());
-      uBit.serial.printf("\r\n Run a fan! \r\n ");
+      uBit.serial.printf("\r\n Run the Command! \r\n");
+
       uBit.serial.printf("\r\n Hold on... \r\n ");
       // Run the command
-       runLed();
-      uBit.sleep(1000);
-      runLightSensor();
+      runLed();
       uBit.sleep(1000);
       runFan();
+      uBit.sleep(1000);
+        runLightSensor();
       uBit.sleep(1000);
     }
     if (decryptedText.substr(0,2) == "ab") {
@@ -335,14 +337,15 @@ void onDataReceived(MicroBitEvent) {
          uBit.sleep(1000);
         uBit.display.scrollAsync("Run!!!");
         uBit.serial.printf("\r\n Command : %s \r\n", decryptedText.substr(0,2).c_str());
-        uBit.serial.printf("\r\n Run LED! \r\n"); 
+      uBit.serial.printf("\r\n Run the Command! \r\n");
+
         uBit.serial.printf("\r\n Hold on... \r\n ");
         // Run the command
-         runLed();
-      uBit.sleep(5000);
-      runFan();
-      uBit.sleep(5000);
-      runLightSensor();
+        runLed();
+        uBit.sleep(1000);
+        runFan();
+        uBit.sleep(1000);
+            runLightSensor();
         uBit.sleep(1000);
     } 
 }
