@@ -206,7 +206,7 @@ std::string decrypt(const std::string &input, const uint8_t *key, const uint8_t 
 void onDataReceived(MicroBitEvent) {
 
     // Assuming receive expects a uint8_t* buffer and length
-    uint8_t receivedData[256];  // Adjust the size as needed
+    uint8_t receivedData[512];  // Adjust the size as needed
     int receivedSize = uBit.radio.datagram.recv(receivedData, sizeof(receivedData));
     uBit.serial.printf("\n Received Size: %d \r\n", receivedSize);
 
@@ -299,25 +299,24 @@ void onDataReceived(MicroBitEvent) {
    
     if (decryptedText.substr(0,2) == "ax") {
 
-    uBit.display.print("A");
+      uBit.display.print("A");
       uBit.sleep(1000);
 
-      uBit.display.scrollAsync("Run LED + FAN!!!");
+      uBit.display.scrollAsync("Run FAN +  LED!!!");
       uBit.serial.printf("\r\n Command : %s \r\n", decryptedText.substr(0,2).c_str());
       uBit.serial.printf("\r\n Run the Command! Run LED + FAN!!! \r\n");
       uBit.serial.printf("\r\n Hold on... \r\n ");
       // Run the command
-      runLed();
-      uBit.sleep(1000);
       runFan();
       uBit.sleep(1000);
- 
+      runLed();
+      uBit.sleep(1000);
 
     }
      // Use decrypted string to determine the button press
     if (decryptedText.substr(0,2) == "bx") {
-      uBit.display.print("3");
-       uBit.sleep(1000);
+      uBit.display.print("B");
+      uBit.sleep(1000);
       uBit.display.scrollAsync("Run Light Sensor!!!");
       uBit.serial.printf("\r\n Command : %s \r\n", decryptedText.substr(0,2).c_str());
       uBit.serial.printf("\r\n Run the Command! Run Light Sensor!!! \r\n");
@@ -328,8 +327,8 @@ void onDataReceived(MicroBitEvent) {
       runLightSensor();
       uBit.sleep(1000);
     }
-    if (decryptedText.substr(0,2) == "ab") {
-        uBit.display.print("B");
+    if (decryptedText.substr(0,2) == "cx") {
+        uBit.display.print("C");
          uBit.sleep(1000);
         uBit.display.scrollAsync("Run LED + Light Sensor!!!");
         uBit.serial.printf("\r\n Command : %s \r\n", decryptedText.substr(0,2).c_str());

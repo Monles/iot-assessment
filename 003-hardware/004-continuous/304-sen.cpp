@@ -296,48 +296,45 @@ int main() {
         }
 
         // Check if button B is pressed
-        if (uBit.buttonB.isPressed()) {
+       else  if (uBit.buttonB.isPressed()) {
             uBit.display.scrollAsync("B Sending a cipher...");
             
             // Create a text combined with command + salt(first 16 characters)
             std::string originalText = "bx";
-
             // Use AES-ECB-256 to ecrypt the text
             std::string encryptedText = sa1 + encrypt(originalText, key, iv);
 
             // Print the original and encrypted strings
             uBit.serial.printf("\r\n  command(The first 2 chars) + salt: %s\r\n", originalText.c_str());
-            uBit.serial.printf("\r\n Encrypted Text: %s\r\n", encryptedText.c_str());
-
-            std::string decryptedText = decrypt(encryptedText, key, iv);
-            uBit.serial.printf("\r\n Decrypted Text: %s \r\n", decryptedText.c_str());
+            uBit.serial.printf("\r\n  Encrypted Text: %s\r\n", encryptedText.c_str());
 
             // Send the encrypted message
             uBit.radio.datagram.send(const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(encryptedText.data())), encryptedText.size());
-            
-            // Introduce a delay before checking the button state again
+
+        // Introduce a delay before checking the button state again
             uBit.sleep(1000);
+
         }
 
         // Check if button A + b both are pressed
-        if (uBit.buttonA.isPressed() && uBit.buttonB.isPressed()) {
-            uBit.display.scrollAsync("A+B Sending a cipher...");
+        else if (uBit.buttonA.isPressed() && uBit.buttonB.isPressed()) {
+           uBit.display.scrollAsync("C Sending a cipher...");
             
             // Create a text combined with command + salt(first 16 characters)
-            std::string originalText = "ab";
+            std::string originalText = "cx";
             // Use AES-ECB-256 to ecrypt the text
-            std::string encryptedText= sa1 + encrypt(originalText, key, iv);
-            // std::string encryptedText2 = encrypt(encryptedText, key, iv);
+            std::string encryptedText = sa1 + encrypt(originalText, key, iv);
 
             // Print the original and encrypted strings
-            uBit.serial.printf("\r\n command(The first 2 chars) + salt: %s\r\n", originalText.c_str());
-            uBit.serial.printf("\r\n Encrypted Text: %s\r\n", encryptedText.c_str());
+            uBit.serial.printf("\r\n  command(The first 2 chars) + salt: %s\r\n", originalText.c_str());
+            uBit.serial.printf("\r\n  Encrypted Text: %s\r\n", encryptedText.c_str());
 
             // Send the encrypted message
             uBit.radio.datagram.send(const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(encryptedText.data())), encryptedText.size());
 
-            // Introduce a delay before checking the button state again
+        // Introduce a delay before checking the button state again
             uBit.sleep(1000);
+
         }
          uBit.sleep(1000);
     }
